@@ -15,52 +15,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. リポジトリをチェックアウト
       - uses: actions/checkout@v4
 
-      # 2. `Deploy_Azule_Front` ディレクトリに移動
-      - name: Change to Deploy_Azule_Front directory
-        run: cd Deploy_Azule_Front
-        # このステップは後続のステップに影響を与えないため、全体を `working-directory` で設定する方が望ましいです。
-
-      # 代替案として、各ステップに `working-directory` を設定します
-
-      # 3. Pythonのセットアップ
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-        working-directory: Deploy_Azule_Front
 
-      # 4. 仮想環境の作成と起動
       - name: Create and start virtual environment
         run: |
           python -m venv venv
           source venv/bin/activate
-        working-directory: Deploy_Azule_Front
-          
-      # 5. 依存関係のインストール
+      
       - name: Install dependencies
         run: pip install -r requirements.txt
-        working-directory: Deploy_Azule_Front
-            
-      # Optional: テストの実行（必要に応じて追加）
-      # - name: Run tests
-      #   run: pytest
-      #   working-directory: Deploy_Azule_Front
+        
+      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
-      # 6. デプロイ用アーティファクトの圧縮
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "venv/*"
-        working-directory: Deploy_Azule_Front
+        run: zip release.zip ./* -r
 
-      # 7. アーティファクトのアップロード
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
           path: |
-            Deploy_Azule_Front/release.zip
+            release.zip
+            !venv/
 
   deploy:
     runs-on: ubuntu-latest
@@ -70,18 +51,15 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     
     steps:
-      # 1. ビルドジョブからアーティファクトをダウンロード
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: python-app
 
-      # 2. アーティファクトの解凍
       - name: Unzip artifact for deployment
-        run: unzip Deploy_Azule_Front/release.zip -d Deploy_Azule_Front
-        # `Deploy_Azule_Front` ディレクトリに解凍
+        run: unzip release.zip
 
-      # 3. Azure Web Appへのデプロイ
+      
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
@@ -89,4 +67,3 @@ jobs:
           app-name: 'tech0-gen-8-step3-testapp-py1-8'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BE840A0BA3FA465DB4CC73FFFBA1A083 }}
-          package: Deploy_Azule_Front/release.zip
