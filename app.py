@@ -38,6 +38,14 @@ def echo():
     message = data.get('message', 'No message provided')
     return jsonify({"message": f"echo: {message}"})
 
+@app.route('/robots933456.txt', methods=['GET'])
+def robots():
+    return "User-agent: *\nDisallow:", 200, {'Content-Type': 'text/plain'}
+
+@app.route('/health', methods=['GET'])
+def health():
+    return "OK", 200
+
 if __name__ == '__main__':
     port=int(os.environ.get('PORT',8000))
     app.run(host='0.0.0.0',port=port,debug=False)
